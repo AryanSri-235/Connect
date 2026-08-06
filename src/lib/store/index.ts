@@ -1,6 +1,7 @@
 import { createFileStore, DEFAULT_FILE } from './jsonfile';
 import { createPostgresStore } from './postgres';
 import type { Store } from './types';
+import { normalizeDatabaseUrl } from './url';
 
 export type { Store } from './types';
 
@@ -15,9 +16,16 @@ let cached: Store | null = null;
 export function getStore(): Store {
   if (cached) return cached;
 
-  const url = process.env.DATABASE_URL?.trim();
-  if (url) {
-    cached = createPostgresStore(url);
+  const raw = process.env.DATABASE_URL ?? '';
+  if (raw.trim()) {
+    const result = normalizeDatabaseUrl(raw);
+    if (!result.ok) throw new Error(result.message);
+    if (result.repaired) {
+      // Worked around a quoted value or a pasted `psql …` command. Fine to run
+      // with, but say so once — the stored value should be corrected at source.
+      console.warn('[connect] DATABASE_URL needed cleaning up (stray quotes or a "psql " prefix).');
+    }
+    cached = createPostgresStore(result.url);
     return cached;
   }
 
