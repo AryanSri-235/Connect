@@ -1,12 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
-      { protocol: 'https', hostname: 'assets.leetcode.com' },
-    ],
-  },
+  // No next/image here on purpose: avatars come straight from GitHub and
+  // LeetCode via plain <img>, so the image optimizer never runs and needs no
+  // remote-host allowlist.
 };
 
 export default nextConfig;
