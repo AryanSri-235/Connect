@@ -1,5 +1,5 @@
 import { addDays, type Day } from './date';
-import type { Checkin, DailyStat, MetricKey, Person, PersonView } from './types';
+import type { Checkin, DailyStat, Goal, MetricKey, Person, PersonView } from './types';
 
 export const EMPTY_STAT = (personId: string, day: Day): DailyStat => ({
   personId,
@@ -99,6 +99,7 @@ export function buildPersonView(
   person: Person,
   stats: DailyStat[],
   checkins: Checkin[],
+  goals: Goal[],
   days: Day[],
   today: Day,
   profile: PersonView['profile'],
@@ -106,12 +107,16 @@ export function buildPersonView(
   const byDay = new Map<Day, DailyStat>(stats.map((s) => [s.day, s]));
   const todayStat = byDay.get(today) ?? EMPTY_STAT(person.id, today);
   const weekDays = days.slice(-7);
+  const checkinsByDay = Object.fromEntries(checkins.map((c) => [c.day, c]));
 
   return {
     person,
     profile,
     days: days.map((day) => byDay.get(day) ?? EMPTY_STAT(person.id, day)),
-    checkins: Object.fromEntries(checkins.map((c) => [c.day, c])),
+    checkins: checkinsByDay,
+    goals,
+    goalsToday: goals.filter((g) => g.day === today),
+    presentToday: checkinsByDay[today]?.done ?? false,
     today: todayStat,
     solvedToday: solvedToday(byDay, today),
     streak: computeStreak(byDay, person, days, today),

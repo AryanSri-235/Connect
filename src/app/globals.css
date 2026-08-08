@@ -852,6 +852,151 @@ select.input {
   cursor: pointer;
 }
 
+/* --- goal tracker -------------------------------------------------------- */
+
+.goal-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.goal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.goal-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  min-height: 34px;
+}
+
+.goal-item:hover {
+  background: var(--surface);
+}
+
+.goal-check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  flex: none;
+  cursor: pointer;
+}
+
+.goal-check:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.goal-title {
+  font-size: 13.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.goal-item[data-done='true'] .goal-title {
+  text-decoration: line-through;
+  color: var(--ink-muted);
+}
+
+.goal-edit {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 13.5px;
+}
+
+.goal-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.goal-item:hover .goal-actions,
+.goal-item:focus-within .goal-actions {
+  opacity: 1;
+}
+
+.goal-action {
+  border: 0;
+  background: none;
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.goal-action:hover {
+  color: var(--ink);
+  background: var(--surface-sunken);
+}
+
+.goal-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.goal-add .input {
+  flex: 1;
+  min-height: 34px;
+  font-size: 13.5px;
+}
+
+/* Touch pointers can't hover, so the row actions must always be visible. */
+@media (hover: none) {
+  .goal-actions {
+    opacity: 1;
+  }
+}
+
+/* --- attendance ---------------------------------------------------------- */
+
+.attendance {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.attendance-btn {
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.attendance-btn[data-marked='true'] {
+  color: var(--good-text);
+  border-color: color-mix(in srgb, var(--good) 40%, transparent);
+  background: color-mix(in srgb, var(--good) 10%, transparent);
+}
+
+.attendance-error {
+  font-size: 11px;
+  color: var(--critical);
+  max-width: 180px;
+  text-align: right;
+}
+
 .history {
   margin-top: 18px;
   border-top: 1px solid var(--grid);

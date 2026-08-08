@@ -1,5 +1,5 @@
 import type { Day } from '../date';
-import type { Checkin, DailyStat, Person, PersonInput, Profile } from '../types';
+import type { Checkin, DailyStat, Goal, Person, PersonInput, Profile } from '../types';
 
 /**
  * The persistence contract. Two drivers implement it: Postgres (production) and
@@ -18,6 +18,13 @@ export interface Store {
 
   getCheckins(from: Day, to: Day): Promise<Checkin[]>;
   saveCheckin(checkin: Omit<Checkin, 'updatedAt'>): Promise<Checkin>;
+
+  getGoals(from: Day, to: Day): Promise<Goal[]>;
+  /** Returns null when the person already hit MAX_GOALS_PER_DAY for that day. */
+  addGoal(personId: string, day: Day, title: string): Promise<Goal | null>;
+  /** Scoped to personId so one person can never edit the other's goal. */
+  updateGoal(id: string, personId: string, patch: { title?: string; done?: boolean }): Promise<Goal | null>;
+  deleteGoal(id: string, personId: string): Promise<boolean>;
 
   getProfiles(): Promise<Profile[]>;
   saveProfile(profile: Profile): Promise<void>;

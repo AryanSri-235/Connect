@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import ActivityFeed from '@/components/ActivityFeed';
-import CheckinPanel from '@/components/CheckinPanel';
+import GoalTracker from '@/components/GoalTracker';
 import HeadToHead from '@/components/HeadToHead';
 import PersonCard from '@/components/PersonCard';
 import Toolbar from '@/components/Toolbar';
@@ -111,13 +111,13 @@ export default async function DashboardPage({
 
         <div className="person-grid">
           {data.people.map((view) => (
-            <PersonCard key={view.person.id} view={view} />
+            <PersonCard key={view.person.id} view={view} me={meIsValid ? me : null} day={data.today} />
           ))}
         </div>
 
         <HeadToHead people={data.people} />
 
-        <CheckinPanel people={data.people} today={data.today} me={meIsValid ? me : null} />
+        <GoalTracker people={data.people} today={data.today} me={meIsValid ? me : null} />
 
         <ActivityFeed people={data.people} />
 

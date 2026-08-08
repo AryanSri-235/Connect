@@ -32,6 +32,10 @@ export interface DailyStat {
   leetcodeTotal: number | null;
 }
 
+/**
+ * Attendance for one person on one day — "I showed up". Distinct from the
+ * numeric GitHub/LeetCode targets, which are measured automatically.
+ */
 export interface Checkin {
   personId: string;
   day: Day;
@@ -39,6 +43,23 @@ export interface Checkin {
   done: boolean;
   updatedAt: string;
 }
+
+/**
+ * A goal someone wrote for themselves for a given day. Only its owner can add,
+ * edit, complete, or delete it; the other person sees it read-only.
+ */
+export interface Goal {
+  id: string;
+  personId: string;
+  day: Day;
+  title: string;
+  done: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export const MAX_GOAL_TITLE = 200;
+export const MAX_GOALS_PER_DAY = 30;
 
 /** Cached provider profile data — avatars, totals, recent activity. */
 export interface Profile {
@@ -95,6 +116,12 @@ export interface PersonView {
   profile: Profile | null;
   days: DailyStat[];
   checkins: Record<Day, Checkin>;
+  /** Every goal in the loaded window, oldest day first. */
+  goals: Goal[];
+  /** Just today's goals, in display order. */
+  goalsToday: Goal[];
+  /** Attendance marked for today. */
+  presentToday: boolean;
   today: DailyStat;
   /** Exact problems solved today, when two consecutive totals were observed. */
   solvedToday: number | null;

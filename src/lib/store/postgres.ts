@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 import type { Day } from '../date';
-import type { Checkin, DailyStat, Person, PersonInput, Profile } from '../types';
+import { MAX_GOALS_PER_DAY, type Checkin, type DailyStat, type Goal, type Person, type PersonInput, type Profile } from '../types';
 import { newId, type Store } from './types';
 
 type Sql = ReturnType<typeof postgres>;
@@ -54,6 +54,17 @@ async function ensureSchema(sql: Sql): Promise<void> {
       primary key (person_id, day)
     )`;
   await sql`
+    create table if not exists daily_goals (
+      id text primary key,
+      person_id text not null references people(id) on delete cascade,
+      day date not null,
+      title text not null,
+      done boolean not null default false,
+      sort_order int not null default 0,
+      created_at timestamptz not null default now()
+    )`;
+  await sql`create index if not exists daily_goals_person_day on daily_goals (person_id, day)`;
+  await sql`
     create table if not exists profiles (
       person_id text primary key references people(id) on delete cascade,
       fetched_at timestamptz not null default now(),
@@ -87,6 +98,26 @@ interface PersonRow {
   goal_leetcode: number;
   sort_order: number;
 }
+
+interface GoalRow {
+  id: string;
+  person_id: string;
+  day: string;
+  title: string;
+  done: boolean;
+  sort_order: number;
+  created_at: Date;
+}
+
+const toGoal = (r: GoalRow): Goal => ({
+  id: r.id,
+  personId: r.person_id,
+  day: r.day as Day,
+  title: r.title,
+  done: r.done,
+  sortOrder: r.sort_order,
+  createdAt: r.created_at.toISOString(),
+});
 
 const toPerson = (r: PersonRow): Person => ({
   id: r.id,
@@ -199,6 +230,51 @@ export function createPostgresStore(url: string): Store {
             note = excluded.note, done = excluded.done, updated_at = now()
           returning updated_at`;
         return { ...c, updatedAt: row.updated_at.toISOString() };
+      }),
+
+    getGoals: (from, to) =>
+      db(async () => {
+        const rows = await sql<GoalRow[]>`
+          select id, person_id, to_char(day, 'YYYY-MM-DD') as day, title, done, sort_order, created_at
+            from daily_goals where day between ${from} and ${to}
+            order by day, sort_order, created_at`;
+        return rows.map(toGoal);
+      }),
+
+    addGoal: (personId, day, title) =>
+      db(async () => {
+        const [{ count }] = await sql<{ count: string }[]>`
+          select count(*)::text as count from daily_goals where person_id = ${personId} and day = ${day}`;
+        if (Number(count) >= MAX_GOALS_PER_DAY) return null;
+
+        const [{ next }] = await sql<{ next: number }[]>`
+          select coalesce(max(sort_order), -1) + 1 as next
+            from daily_goals where person_id = ${personId} and day = ${day}`;
+
+        const [row] = await sql<GoalRow[]>`
+          insert into daily_goals (id, person_id, day, title, done, sort_order)
+          values (${newId()}, ${personId}, ${day}, ${title}, false, ${next})
+          returning id, person_id, to_char(day, 'YYYY-MM-DD') as day, title, done, sort_order, created_at`;
+        return toGoal(row);
+      }),
+
+    updateGoal: (id, personId, patch) =>
+      db(async () => {
+        // person_id in the WHERE clause is the authorisation check: a request
+        // naming someone else's goal id simply matches no row.
+        const [row] = await sql<GoalRow[]>`
+          update daily_goals set
+            title = coalesce(${patch.title ?? null}, title),
+            done  = coalesce(${patch.done ?? null}, done)
+          where id = ${id} and person_id = ${personId}
+          returning id, person_id, to_char(day, 'YYYY-MM-DD') as day, title, done, sort_order, created_at`;
+        return row ? toGoal(row) : null;
+      }),
+
+    deleteGoal: (id, personId) =>
+      db(async () => {
+        const rows = await sql`delete from daily_goals where id = ${id} and person_id = ${personId} returning id`;
+        return rows.length > 0;
       }),
 
     getProfiles: () =>

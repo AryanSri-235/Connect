@@ -1,4 +1,6 @@
+import AttendanceButton from './AttendanceButton';
 import Heatmap from './Heatmap';
+import type { Day } from '@/lib/date';
 import { num } from '@/lib/format';
 import type { PersonView } from '@/lib/types';
 
@@ -35,8 +37,9 @@ function Meter({ label, value, target, met }: { label: string; value: number; ta
   );
 }
 
-export default function PersonCard({ view }: { view: PersonView }) {
-  const { person, profile, days, today, streak, goalsMetToday, solvedToday } = view;
+export default function PersonCard({ view, me, day }: { view: PersonView; me: string | null; day: Day }) {
+  const { person, profile, days, today, streak, goalsMetToday, solvedToday, goalsToday, presentToday } = view;
+  const goalsDone = goalsToday.filter((g) => g.done).length;
   const gh = profile?.github;
   const lc = profile?.leetcode;
   const avatar = gh?.avatarUrl ?? lc?.avatarUrl ?? null;
@@ -72,12 +75,7 @@ export default function PersonCard({ view }: { view: PersonView }) {
           </div>
         </div>
         <div style={{ marginLeft: 'auto' }}>
-          <span className="badge" data-tone={goalsMetToday.all ? 'good' : 'pending'}>
-            <span className="badge-icon" aria-hidden="true">
-              {goalsMetToday.all ? '✓' : '○'}
-            </span>
-            {goalsMetToday.all ? 'Day done' : 'In progress'}
-          </span>
+          <AttendanceButton day={day} present={presentToday} editable={person.id === me} name={person.name} />
         </div>
       </div>
 
@@ -140,6 +138,29 @@ export default function PersonCard({ view }: { view: PersonView }) {
               met={goalsMetToday.leetcode}
             />
           )}
+        </div>
+      )}
+
+      {goalsToday.length > 0 && (
+        <div className="meters" style={{ marginTop: 12 }}>
+          <div>
+            <div className="meter-head">
+              <span className="name">Goals written today</span>
+              <span className="count">
+                {goalsDone} / {goalsToday.length}
+              </span>
+            </div>
+            <div
+              className="meter-track"
+              role="meter"
+              aria-valuenow={goalsDone}
+              aria-valuemin={0}
+              aria-valuemax={goalsToday.length}
+              aria-label={`Goals done: ${goalsDone} of ${goalsToday.length}`}
+            >
+              <div className="meter-fill" style={{ width: `${(goalsDone / goalsToday.length) * 100}%` }} />
+            </div>
+          </div>
         </div>
       )}
 

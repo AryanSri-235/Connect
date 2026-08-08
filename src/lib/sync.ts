@@ -136,9 +136,10 @@ export async function getDashboardData(windowDays: WindowDays = DEFAULT_WINDOW):
   const days = lastNDays(windowDays, to);
   const from = days[0];
 
-  const [stats, checkins, profiles, lastSync] = await Promise.all([
+  const [stats, checkins, goals, profiles, lastSync] = await Promise.all([
     store.getStats(from, to),
     store.getCheckins(from, to),
+    store.getGoals(from, to),
     store.getProfiles(),
     store.getMeta(LAST_SYNC_KEY),
   ]);
@@ -151,6 +152,7 @@ export async function getDashboardData(windowDays: WindowDays = DEFAULT_WINDOW):
         person,
         stats.filter((s) => s.personId === person.id),
         checkins.filter((c) => c.personId === person.id),
+        goals.filter((g) => g.personId === person.id),
         days,
         to,
         profileById.get(person.id) ?? null,

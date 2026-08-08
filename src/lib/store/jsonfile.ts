@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { Day } from '../date';
-import type { Checkin, DailyStat, Person, Profile } from '../types';
+import { MAX_GOALS_PER_DAY, type Checkin, type DailyStat, type Goal, type Person, type Profile } from '../types';
 import { newId, type Store } from './types';
 
 /**
@@ -15,11 +15,12 @@ interface FileShape {
   people: Person[];
   stats: Record<string, DailyStat>; // `${personId}|${day}`
   checkins: Record<string, Checkin>; // `${personId}|${day}`
+  goals: Record<string, Goal>; // keyed by goal id
   profiles: Record<string, Profile>;
   meta: Record<string, string>;
 }
 
-const EMPTY: FileShape = { people: [], stats: {}, checkins: {}, profiles: {}, meta: {} };
+const EMPTY: FileShape = { people: [], stats: {}, checkins: {}, goals: {}, profiles: {}, meta: {} };
 
 const key = (personId: string, day: Day) => `${personId}|${day}`;
 
@@ -81,7 +82,7 @@ export function createFileStore(file: string): Store {
         const keep = new Set(next.map((p) => p.id));
 
         // Cascade: drop rows belonging to removed people.
-        for (const store of [d.stats, d.checkins] as Record<string, { personId: string }>[]) {
+        for (const store of [d.stats, d.checkins, d.goals] as Record<string, { personId: string }>[]) {
           for (const k of Object.keys(store)) {
             if (!keep.has(store[k].personId)) delete store[k];
           }
@@ -112,6 +113,51 @@ export function createFileStore(file: string): Store {
         const saved: Checkin = { ...c, updatedAt: new Date().toISOString() };
         d.checkins[key(c.personId, c.day)] = saved;
         return saved;
+      }, true),
+
+    getGoals: (from, to) =>
+      tx(
+        (d) =>
+          Object.values(d.goals)
+            .filter((g) => inRange(g.day, from, to))
+            .sort((a, b) => a.day.localeCompare(b.day) || a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt)),
+        false,
+      ),
+
+    addGoal: (personId, day, title) =>
+      tx((d) => {
+        const mine = Object.values(d.goals).filter((g) => g.personId === personId && g.day === day);
+        if (mine.length >= MAX_GOALS_PER_DAY) return null;
+
+        const goal: Goal = {
+          id: newId(),
+          personId,
+          day,
+          title,
+          done: false,
+          sortOrder: mine.reduce((max, g) => Math.max(max, g.sortOrder), -1) + 1,
+          createdAt: new Date().toISOString(),
+        };
+        d.goals[goal.id] = goal;
+        return goal;
+      }, true),
+
+    updateGoal: (id, personId, patch) =>
+      tx((d) => {
+        const goal = d.goals[id];
+        // Ownership check: a goal belonging to the other person is untouchable.
+        if (!goal || goal.personId !== personId) return null;
+        if (patch.title !== undefined) goal.title = patch.title;
+        if (patch.done !== undefined) goal.done = patch.done;
+        return goal;
+      }, true),
+
+    deleteGoal: (id, personId) =>
+      tx((d) => {
+        const goal = d.goals[id];
+        if (!goal || goal.personId !== personId) return false;
+        delete d.goals[id];
+        return true;
       }, true),
 
     getProfiles: () => tx((d) => Object.values(d.profiles), false),
