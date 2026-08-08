@@ -4,15 +4,19 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { addDays, formatDay, relativeDay, type Day } from '@/lib/date';
 import { MAX_GOAL_TITLE, type Goal, type PersonView } from '@/lib/types';
+import { useDayRollover } from './useDayRollover';
 
 interface Props {
   people: PersonView[];
   today: Day;
+  timezone: string;
   me: string | null;
 }
 
-export default function GoalTracker({ people, today, me }: Props) {
+export default function GoalTracker({ people, today, timezone, me }: Props) {
   const router = useRouter();
+  // At midnight the list must empty itself and the heading roll over.
+  useDayRollover(today, timezone);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -73,10 +77,11 @@ export default function GoalTracker({ people, today, me }: Props) {
       createdAt: new Date().toISOString(),
     };
     mutate([...goals, temp], () =>
+      // No day sent — the server stamps it, so a stale tab can't misfile a goal.
       fetch('/api/goals', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ day: today, title }),
+        body: JSON.stringify({ title }),
       }),
     );
   }

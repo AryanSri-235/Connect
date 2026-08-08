@@ -2,17 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import type { Day } from '@/lib/date';
 
 interface Props {
-  day: Day;
   present: boolean;
   /** Only the person viewing as themselves can mark their own attendance. */
   editable: boolean;
   name: string;
 }
 
-export default function AttendanceButton({ day, present, editable, name }: Props) {
+export default function AttendanceButton({ present, editable, name }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useState<boolean | null>(null);
@@ -27,10 +25,11 @@ export default function AttendanceButton({ day, present, editable, name }: Props
     setBusy(true);
     setError(null);
     try {
+      // The server stamps the day itself, so this always lands on the real today.
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ day, present: next }),
+        body: JSON.stringify({ present: next }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(body.error ?? `Failed (${res.status})`);

@@ -2,10 +2,9 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/apiAuth';
 import { ME_COOKIE } from '@/lib/auth';
+import { today } from '@/lib/date';
 import { getStore } from '@/lib/store';
 import { MAX_GOAL_TITLE, MAX_GOALS_PER_DAY } from '@/lib/types';
-
-const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Whose goals this request may touch. Both people share one password, so this
@@ -31,12 +30,15 @@ export async function POST(request: Request) {
   const me = await currentPersonId();
   if (!me) return notYou();
 
-  const body = (await request.json().catch(() => ({}))) as { day?: unknown; title?: unknown };
-  const day = typeof body.day === 'string' ? body.day : '';
+  const body = (await request.json().catch(() => ({}))) as { title?: unknown };
   const title = typeof body.title === 'string' ? body.title.trim().slice(0, MAX_GOAL_TITLE) : '';
 
-  if (!DAY_PATTERN.test(day)) return NextResponse.json({ error: 'day must be YYYY-MM-DD' }, { status: 400 });
   if (!title) return NextResponse.json({ error: 'Write something first.' }, { status: 400 });
+
+  // The day is decided here, never by the caller. A tab left open past midnight
+  // still holds yesterday's date, and trusting it would file the goal under the
+  // wrong day. The client refreshes on rollover, so the UI catches up.
+  const day = today();
 
   try {
     const goal = await getStore().addGoal(me, day, title);

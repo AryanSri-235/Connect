@@ -2,9 +2,8 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/apiAuth';
 import { ME_COOKIE } from '@/lib/auth';
+import { today } from '@/lib/date';
 import { getStore } from '@/lib/store';
-
-const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Marks "I showed up today" for the current person.
@@ -19,11 +18,12 @@ export async function POST(request: Request) {
 
   const meId = (await cookies()).get(ME_COOKIE)?.value ?? '';
 
-  const body = (await request.json().catch(() => ({}))) as { day?: unknown; present?: unknown };
-  const day = typeof body.day === 'string' ? body.day : '';
+  const body = (await request.json().catch(() => ({}))) as { present?: unknown };
   const present = body.present !== false; // default to marking present
 
-  if (!DAY_PATTERN.test(day)) return NextResponse.json({ error: 'day must be YYYY-MM-DD' }, { status: 400 });
+  // Server decides the day — see the note in /api/goals. You can only ever mark
+  // attendance for the day it actually is.
+  const day = today();
 
   try {
     const store = getStore();

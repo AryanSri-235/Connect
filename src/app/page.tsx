@@ -111,13 +111,18 @@ export default async function DashboardPage({
 
         <div className="person-grid">
           {data.people.map((view) => (
-            <PersonCard key={view.person.id} view={view} me={meIsValid ? me : null} day={data.today} />
+            <PersonCard key={view.person.id} view={view} me={meIsValid ? me : null} />
           ))}
         </div>
 
         <HeadToHead people={data.people} />
 
-        <GoalTracker people={data.people} today={data.today} me={meIsValid ? me : null} />
+        <GoalTracker
+          people={data.people}
+          today={data.today}
+          timezone={data.timezone}
+          me={meIsValid ? me : null}
+        />
 
         <ActivityFeed people={data.people} />
 

@@ -1,6 +1,5 @@
 import AttendanceButton from './AttendanceButton';
 import Heatmap from './Heatmap';
-import type { Day } from '@/lib/date';
 import { num } from '@/lib/format';
 import type { PersonView } from '@/lib/types';
 
@@ -37,7 +36,7 @@ function Meter({ label, value, target, met }: { label: string; value: number; ta
   );
 }
 
-export default function PersonCard({ view, me, day }: { view: PersonView; me: string | null; day: Day }) {
+export default function PersonCard({ view, me }: { view: PersonView; me: string | null }) {
   const { person, profile, days, today, streak, goalsMetToday, solvedToday, goalsToday, presentToday } = view;
   const goalsDone = goalsToday.filter((g) => g.done).length;
   const gh = profile?.github;
@@ -75,7 +74,7 @@ export default function PersonCard({ view, me, day }: { view: PersonView; me: st
           </div>
         </div>
         <div style={{ marginLeft: 'auto' }}>
-          <AttendanceButton day={day} present={presentToday} editable={person.id === me} name={person.name} />
+          <AttendanceButton present={presentToday} editable={person.id === me} name={person.name} />
         </div>
       </div>
 
