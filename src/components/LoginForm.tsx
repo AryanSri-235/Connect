@@ -35,7 +35,7 @@ export default function LoginForm({ needsSetup }: { needsSetup: boolean }) {
       <div className="brand" style={{ marginBottom: 14 }}>
         <span className="dot" aria-hidden="true" />
         <span className="dot" aria-hidden="true" />
-        <h1>connect</h1>
+        <h1>Connect</h1>
       </div>
 
       {needsSetup ? (
@@ -44,7 +44,7 @@ export default function LoginForm({ needsSetup }: { needsSetup: boolean }) {
           you&apos;ll both use it to get in.
         </p>
       ) : (
-        <p>This dashboard is shared between two people. Enter the password you agreed on.</p>
+        <p>This dashboard is shared between two people. Enter the password you both agreed on</p>
       )}
 
       <div className="form-grid">
