@@ -139,3 +139,50 @@ export function heatLevel(value: number, max: number): 0 | 1 | 2 | 3 | 4 {
   if (ratio <= 0.75) return 3;
   return 4;
 }
+
+export interface WeeklyWinnerResult {
+  winnerId: string | null;
+  isTie: boolean;
+}
+
+/** Determines who won the past 7 days based on days met and total contribution points. */
+export function computeWeeklyWinner(people: PersonView[]): WeeklyWinnerResult {
+  if (people.length === 0) return { winnerId: null, isTie: false };
+  if (people.length === 1) {
+    const p = people[0];
+    const score = p.week.daysMet * 10 + p.week.github + p.week.leetcode;
+    return score > 0 ? { winnerId: p.person.id, isTie: false } : { winnerId: null, isTie: false };
+  }
+
+  let bestPerson: PersonView | null = null;
+  let maxDaysMet = -1;
+  let maxTotalActivity = -1;
+  let isTie = false;
+
+  for (const p of people) {
+    const daysMet = p.week.daysMet;
+    const totalActivity = p.week.github + p.week.leetcode;
+
+    if (daysMet > maxDaysMet) {
+      maxDaysMet = daysMet;
+      maxTotalActivity = totalActivity;
+      bestPerson = p;
+      isTie = false;
+    } else if (daysMet === maxDaysMet) {
+      if (totalActivity > maxTotalActivity) {
+        maxTotalActivity = totalActivity;
+        bestPerson = p;
+        isTie = false;
+      } else if (totalActivity === maxTotalActivity) {
+        isTie = true;
+      }
+    }
+  }
+
+  if (maxDaysMet <= 0 && maxTotalActivity <= 0) {
+    return { winnerId: null, isTie: false };
+  }
+
+  return { winnerId: isTie ? null : (bestPerson?.person.id ?? null), isTie };
+}
+

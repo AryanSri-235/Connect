@@ -36,7 +36,15 @@ function Meter({ label, value, target, met }: { label: string; value: number; ta
   );
 }
 
-export default function PersonCard({ view, me }: { view: PersonView; me: string | null }) {
+export default function PersonCard({
+  view,
+  me,
+  isWeeklyWinner = false,
+}: {
+  view: PersonView;
+  me: string | null;
+  isWeeklyWinner?: boolean;
+}) {
   const { person, profile, days, today, streak, goalsMetToday, solvedToday, goalsToday, presentToday } = view;
   const goalsDone = goalsToday.filter((g) => g.done).length;
   const gh = profile?.github;
@@ -59,6 +67,11 @@ export default function PersonCard({ view, me }: { view: PersonView; me: string 
           <h3 className="person-name">
             <span className="swatch" aria-hidden="true" />
             {person.name}
+            {isWeeklyWinner && (
+              <span className="crown-badge" title="Weekly Winner - Highest performance this week!">
+                👑 Winner
+              </span>
+            )}
           </h3>
           <div className="handles">
             {person.githubUsername && (

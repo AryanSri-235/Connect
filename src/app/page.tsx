@@ -6,8 +6,11 @@ import GoalTracker from '@/components/GoalTracker';
 import HeadToHead from '@/components/HeadToHead';
 import PersonCard from '@/components/PersonCard';
 import Toolbar from '@/components/Toolbar';
+import WeeklyRecap from '@/components/WeeklyRecap';
+import AccountabilityStakes from '@/components/AccountabilityStakes';
 import { authState, ME_COOKIE, type AuthState } from '@/lib/auth';
 import { formatFullDay } from '@/lib/date';
+import { computeWeeklyWinner } from '@/lib/metrics';
 import { getStore } from '@/lib/store';
 import { getDashboardData, syncIfStale } from '@/lib/sync';
 import { normalizeWindow } from '@/lib/window';
@@ -61,6 +64,7 @@ export default async function DashboardPage({
   const data = await getDashboardData(windowDays);
   const me = (await cookies()).get(ME_COOKIE)?.value ?? null;
   const meIsValid = data.people.some((p) => p.person.id === me);
+  const weeklyWinner = computeWeeklyWinner(data.people);
 
   return (
     <main className="shell">
@@ -111,11 +115,20 @@ export default async function DashboardPage({
 
         <div className="person-grid">
           {data.people.map((view) => (
-            <PersonCard key={view.person.id} view={view} me={meIsValid ? me : null} />
+            <PersonCard
+              key={view.person.id}
+              view={view}
+              me={meIsValid ? me : null}
+              isWeeklyWinner={weeklyWinner.winnerId === view.person.id}
+            />
           ))}
         </div>
 
+        <WeeklyRecap people={data.people} weeklyWinner={weeklyWinner} />
+
         <HeadToHead people={data.people} />
+
+        <AccountabilityStakes people={data.people} today={data.today} />
 
         <GoalTracker
           people={data.people}
