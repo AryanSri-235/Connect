@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { num } from '@/lib/format';
 import type { PersonView } from '@/lib/types';
 
@@ -5,7 +8,6 @@ interface Row {
   label: string;
   a: number;
   b: number;
-  /** Higher is better — used to word the lead line. */
   unit: string;
 }
 
@@ -42,6 +44,8 @@ function Bars({ row, nameA, nameB }: { row: Row; nameA: string; nameB: string })
 }
 
 export default function HeadToHead({ people }: { people: PersonView[] }) {
+  const [collapsed, setCollapsed] = useState(false);
+
   if (people.length < 2) return null;
 
   const [a, b] = people;
@@ -64,58 +68,76 @@ export default function HeadToHead({ people }: { people: PersonView[] }) {
         : `Level at ${aWins}–${bWins} this week.`;
 
   return (
-    <section className="card" id="head-to-head">
+    <section className="card" id="head-to-head" data-collapsed={collapsed}>
       <div className="section-head">
-        <h2>Head to head — last 7 days</h2>
-        <div className="spacer" />
-        <div className="legend">
-          <span className="legend-item">
-            <span className="legend-swatch" style={{ background: 'var(--p0)' }} aria-hidden="true" />
-            {a.person.name}
-          </span>
-          <span className="legend-item">
-            <span className="legend-swatch" style={{ background: 'var(--p1)' }} aria-hidden="true" />
-            {b.person.name}
-          </span>
+        <div className="section-title-wrap" onClick={() => setCollapsed(!collapsed)}>
+          <h2>⚔️ Head to head — last 7 days</h2>
+          {collapsed && <span className="subtle">(Collapsed)</span>}
         </div>
+        <div className="spacer" />
+        {!collapsed && (
+          <div className="legend">
+            <span className="legend-item">
+              <span className="legend-swatch" style={{ background: 'var(--p0)' }} aria-hidden="true" />
+              {a.person.name}
+            </span>
+            <span className="legend-item">
+              <span className="legend-swatch" style={{ background: 'var(--p1)' }} aria-hidden="true" />
+              {b.person.name}
+            </span>
+          </div>
+        )}
+        <button
+          type="button"
+          className="collapse-btn"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expand section' : 'Collapse section'}
+        >
+          {collapsed ? '▼ Expand' : '▲ Collapse'}
+        </button>
       </div>
 
-      {rows.map((row) => (
-        <Bars key={row.label} row={row} nameA={a.person.name} nameB={b.person.name} />
-      ))}
+      {!collapsed && (
+        <>
+          {rows.map((row) => (
+            <Bars key={row.label} row={row} nameA={a.person.name} nameB={b.person.name} />
+          ))}
 
-      <p className="h2h-lead">{lead}</p>
+          <p className="h2h-lead">{lead}</p>
 
-      <div className="table-wrap">
-        <table className="data">
-          <caption className="sr-only">Head to head totals for the last 7 days</caption>
-          <thead>
-            <tr>
-              <th scope="col">Metric</th>
-              <th scope="col">{a.person.name}</th>
-              <th scope="col">{b.person.name}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.label}>
-                <th scope="row" style={{ fontWeight: 500, textAlign: 'left' }}>
-                  {r.label}
-                </th>
-                <td>{r.a.toLocaleString()}</td>
-                <td>{r.b.toLocaleString()}</td>
-              </tr>
-            ))}
-            <tr>
-              <th scope="row" style={{ fontWeight: 500, textAlign: 'left' }}>
-                Current streak
-              </th>
-              <td>{a.streak.current}</td>
-              <td>{b.streak.current}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <div className="table-wrap">
+            <table className="data">
+              <caption className="sr-only">Head to head totals for the last 7 days</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Metric</th>
+                  <th scope="col">{a.person.name}</th>
+                  <th scope="col">{b.person.name}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.label}>
+                    <th scope="row" style={{ fontWeight: 500, textAlign: 'left' }}>
+                      {r.label}
+                    </th>
+                    <td>{r.a.toLocaleString()}</td>
+                    <td>{r.b.toLocaleString()}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <th scope="row" style={{ fontWeight: 500, textAlign: 'left' }}>
+                    Current streak
+                  </th>
+                  <td>{a.streak.current}</td>
+                  <td>{b.streak.current}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </section>
   );
 }

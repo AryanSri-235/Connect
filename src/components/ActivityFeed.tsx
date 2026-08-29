@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { ActivityItem, PersonView } from '@/lib/types';
 
 interface Entry extends ActivityItem {
@@ -18,6 +21,7 @@ function ago(iso: string, now: number): string {
 }
 
 export default function ActivityFeed({ people }: { people: PersonView[] }) {
+  const [collapsed, setCollapsed] = useState(false);
   const now = Date.now();
 
   const entries: Entry[] = people
@@ -32,40 +36,56 @@ export default function ActivityFeed({ people }: { people: PersonView[] }) {
     .slice(0, 20);
 
   return (
-    <section className="card" id="activity">
+    <section className="card" id="activity" data-collapsed={collapsed}>
       <div className="section-head">
-        <h2>Recent activity</h2>
+        <div className="section-title-wrap" onClick={() => setCollapsed(!collapsed)}>
+          <h2>⚡ Recent activity</h2>
+          {collapsed && <span className="subtle">(Collapsed)</span>}
+        </div>
         <div className="spacer" />
-        <span className="subtle">newest first</span>
+        {!collapsed && <span className="subtle">newest first</span>}
+        <button
+          type="button"
+          className="collapse-btn"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expand section' : 'Collapse section'}
+        >
+          {collapsed ? '▼ Expand' : '▲ Collapse'}
+        </button>
       </div>
 
-      {entries.length === 0 ? (
-        <p className="checkin-empty">
-          Nothing yet — activity appears once GitHub or LeetCode reports something for either of you.
-        </p>
-      ) : (
-        <div className="feed">
-          {entries.map((e, i) => (
-            <div className="feed-item person" data-slot={e.slot} key={`${e.at}-${i}`}>
-              <span className="feed-dot" style={{ background: 'var(--accent)' }} aria-hidden="true" />
-              <div>
-                <div className="feed-title">
-                  <strong style={{ fontWeight: 580 }}>{e.personName}</strong>{' '}
-                  {e.url ? (
-                    <a href={e.url} target="_blank" rel="noreferrer">
-                      {e.title}
-                    </a>
-                  ) : (
-                    e.title
-                  )}
-                  <span className="subtle"> · {e.provider === 'github' ? 'GitHub' : 'LeetCode'}</span>
+      {!collapsed && (
+        <>
+          {entries.length === 0 ? (
+            <p className="checkin-empty">
+              Nothing yet — activity appears once GitHub or LeetCode reports something for either of you.
+            </p>
+          ) : (
+            <div className="feed">
+              {entries.map((e, i) => (
+                <div className="feed-item person" data-slot={e.slot} key={`${e.at}-${i}`}>
+                  <span className="feed-dot" style={{ background: 'var(--accent)' }} aria-hidden="true" />
+                  <div>
+                    <div className="feed-title">
+                      <strong style={{ fontWeight: 580 }}>{e.personName}</strong>{' '}
+                      {e.url ? (
+                        <a href={e.url} target="_blank" rel="noreferrer">
+                          {e.title}
+                        </a>
+                      ) : (
+                        e.title
+                      )}
+                      <span className="subtle"> · {e.provider === 'github' ? 'GitHub' : 'LeetCode'}</span>
+                    </div>
+                    {e.detail && <span className="feed-detail">{e.detail}</span>}
+                  </div>
+                  <span className="feed-time">{ago(e.at, now)}</span>
                 </div>
-                {e.detail && <span className="feed-detail">{e.detail}</span>}
-              </div>
-              <span className="feed-time">{ago(e.at, now)}</span>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </section>
   );

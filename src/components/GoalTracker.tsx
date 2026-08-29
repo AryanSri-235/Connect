@@ -23,6 +23,7 @@ export default function GoalTracker({ people, today, timezone, me }: Props) {
 
   // Mirror the server's list so a tick feels instant; re-seeded whenever the
   // server sends new data.
+  const [collapsed, setCollapsed] = useState(false);
   const [goals, setGoals] = useState<Goal[]>(() => people.flatMap((p) => p.goalsToday));
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -33,16 +34,12 @@ export default function GoalTracker({ people, today, timezone, me }: Props) {
   const serverKey = serverGoals.map((g) => `${g.id}:${g.done}:${g.title}`).join('|');
   useEffect(() => {
     setGoals(serverGoals);
-    // serverKey collapses the list into a comparable string so this only fires
-    // when the data actually changed, not on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverKey]);
 
   useEffect(() => {
     if (editingId) editRef.current?.focus();
   }, [editingId]);
 
-  /** Run a mutation, roll the optimistic state back if the server rejects it. */
   async function mutate(optimistic: Goal[], run: () => Promise<Response>) {
     const previous = goals;
     setGoals(optimistic);
@@ -77,7 +74,6 @@ export default function GoalTracker({ people, today, timezone, me }: Props) {
       createdAt: new Date().toISOString(),
     };
     mutate([...goals, temp], () =>
-      // No day sent — the server stamps it, so a stale tab can't misfile a goal.
       fetch('/api/goals', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -124,12 +120,28 @@ export default function GoalTracker({ people, today, timezone, me }: Props) {
   const historyDays: Day[] = Array.from({ length: 7 }, (_, i) => addDays(today, -(i + 1)));
 
   return (
-    <section className="card" id="goals">
+    <section className="card" id="goals" data-collapsed={collapsed}>
       <div className="section-head">
-        <h2>Goals — {formatDay(today)}</h2>
+        <div className="section-title-wrap" onClick={() => setCollapsed(!collapsed)}>
+          <h2>🎯 Daily Goals — {formatDay(today)}</h2>
+          {collapsed && <span className="subtle">(Collapsed)</span>}
+        </div>
         <div className="spacer" />
-        {!me && <span className="subtle">Pick who you are in the top bar to add yours</span>}
+        {!collapsed && !me && <span className="subtle">Pick who you are in the top bar to add yours</span>}
+        <button
+          type="button"
+          className="collapse-btn"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expand section' : 'Collapse section'}
+        >
+          {collapsed ? '▼ Expand' : '▲ Collapse'}
+        </button>
       </div>
+
+      {!collapsed && (
+        <>
+
 
       {error && (
         <div className="notice" data-tone="critical" style={{ marginBottom: 14 }}>
@@ -283,6 +295,8 @@ export default function GoalTracker({ people, today, timezone, me }: Props) {
           );
         })}
       </div>
+        </>
+      )}
     </section>
   );
 }
