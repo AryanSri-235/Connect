@@ -113,7 +113,7 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="person-grid">
+        <div className="person-grid" id="cards">
           {data.people.map((view) => (
             <PersonCard
               key={view.person.id}
@@ -124,7 +124,7 @@ export default async function DashboardPage({
           ))}
         </div>
 
-        <WeeklyRecap people={data.people} weeklyWinner={weeklyWinner} />
+        <WeeklyRecap people={data.people} today={data.today} />
 
         <HeadToHead people={data.people} />
 

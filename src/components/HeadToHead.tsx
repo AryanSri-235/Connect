@@ -64,7 +64,7 @@ export default function HeadToHead({ people }: { people: PersonView[] }) {
         : `Level at ${aWins}–${bWins} this week.`;
 
   return (
-    <section className="card">
+    <section className="card" id="head-to-head">
       <div className="section-head">
         <h2>Head to head — last 7 days</h2>
         <div className="spacer" />

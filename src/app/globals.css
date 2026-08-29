@@ -177,12 +177,28 @@ button {
   border-radius: 4px;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* --- layout -------------------------------------------------------------- */
 
 .shell {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 28px 24px 80px;
+  padding: 24px 24px 80px;
+}
+
+.navbar-container {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--plane);
+  padding-top: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
 }
 
 .topbar {
@@ -190,7 +206,36 @@ button {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--ink-secondary);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nav-link:hover {
+  color: var(--ink);
+  background: var(--surface-sunken);
+  text-decoration: none;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: wrap;
 }
 
 .brand {

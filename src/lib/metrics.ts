@@ -145,33 +145,36 @@ export interface WeeklyWinnerResult {
   isTie: boolean;
 }
 
-/** Determines who won the past 7 days based on days met and total contribution points. */
-export function computeWeeklyWinner(people: PersonView[]): WeeklyWinnerResult {
+/** Determines who won the specified days based on days met and total contribution points. */
+export function computeWeeklyWinner(people: PersonView[], weekDays?: Day[]): WeeklyWinnerResult {
   if (people.length === 0) return { winnerId: null, isTie: false };
   if (people.length === 1) {
     const p = people[0];
-    const score = p.week.daysMet * 10 + p.week.github + p.week.leetcode;
+    const byDay = new Map<Day, DailyStat>(p.days.map((s) => [s.day, s]));
+    const stats = weekDays ? sumWindow(byDay, p.person, weekDays) : p.week;
+    const score = stats.daysMet * 10 + stats.github + stats.leetcode;
     return score > 0 ? { winnerId: p.person.id, isTie: false } : { winnerId: null, isTie: false };
   }
 
-  let bestPerson: PersonView | null = null;
+  let bestPersonId: string | null = null;
   let maxDaysMet = -1;
   let maxTotalActivity = -1;
   let isTie = false;
 
   for (const p of people) {
-    const daysMet = p.week.daysMet;
-    const totalActivity = p.week.github + p.week.leetcode;
+    const byDay = new Map<Day, DailyStat>(p.days.map((s) => [s.day, s]));
+    const stats = weekDays ? sumWindow(byDay, p.person, weekDays) : p.week;
+    const totalActivity = stats.github + stats.leetcode;
 
-    if (daysMet > maxDaysMet) {
-      maxDaysMet = daysMet;
+    if (stats.daysMet > maxDaysMet) {
+      maxDaysMet = stats.daysMet;
       maxTotalActivity = totalActivity;
-      bestPerson = p;
+      bestPersonId = p.person.id;
       isTie = false;
-    } else if (daysMet === maxDaysMet) {
+    } else if (stats.daysMet === maxDaysMet) {
       if (totalActivity > maxTotalActivity) {
         maxTotalActivity = totalActivity;
-        bestPerson = p;
+        bestPersonId = p.person.id;
         isTie = false;
       } else if (totalActivity === maxTotalActivity) {
         isTie = true;
@@ -183,6 +186,6 @@ export function computeWeeklyWinner(people: PersonView[]): WeeklyWinnerResult {
     return { winnerId: null, isTie: false };
   }
 
-  return { winnerId: isTie ? null : (bestPerson?.person.id ?? null), isTie };
+  return { winnerId: isTie ? null : bestPersonId, isTie };
 }
 

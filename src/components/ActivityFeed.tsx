@@ -32,7 +32,7 @@ export default function ActivityFeed({ people }: { people: PersonView[] }) {
     .slice(0, 20);
 
   return (
-    <section className="card">
+    <section className="card" id="activity">
       <div className="section-head">
         <h2>Recent activity</h2>
         <div className="spacer" />

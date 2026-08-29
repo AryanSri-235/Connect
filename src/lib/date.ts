@@ -111,3 +111,18 @@ export function relativeDay(day: Day, ref: Day = today()): string {
 export function monthLabel(day: Day): string {
   return parseDay(day).toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
 }
+
+/** Returns Monday of the week containing `refDay`. */
+export function getStartOfWeek(refDay: Day = today()): Day {
+  const d = parseDay(refDay);
+  const dayOfWeek = d.getUTCDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  return addDays(refDay, distanceToMon);
+}
+
+/** Returns the 7 days (Monday..Sunday) for a given week offset (0 = current week, -1 = last week). */
+export function getCalendarWeekDays(refDay: Day = today(), weekOffset: number = 0): Day[] {
+  const mon = addDays(getStartOfWeek(refDay), weekOffset * 7);
+  return rangeDays(mon, addDays(mon, 6));
+}
+

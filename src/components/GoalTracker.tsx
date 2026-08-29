@@ -124,7 +124,7 @@ export default function GoalTracker({ people, today, timezone, me }: Props) {
   const historyDays: Day[] = Array.from({ length: 7 }, (_, i) => addDays(today, -(i + 1)));
 
   return (
-    <section className="card">
+    <section className="card" id="goals">
       <div className="section-head">
         <h2>Goals — {formatDay(today)}</h2>
         <div className="spacer" />

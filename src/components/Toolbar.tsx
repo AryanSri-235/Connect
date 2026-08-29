@@ -75,59 +75,72 @@ export default function Toolbar({ people, me, windowDays, lastSync }: Props) {
 
   return (
     <>
-      <div className="topbar">
-        <div className="brand">
-          <span className="dot" aria-hidden="true" />
-          <span className="dot" aria-hidden="true" />
-          <h1>connect</h1>
-          <span className="brand-date">{syncedLabel}</span>
-        </div>
+      <header className="navbar-container">
+        <div className="topbar">
+          <div className="brand">
+            <span className="dot" aria-hidden="true" />
+            <span className="dot" aria-hidden="true" />
+            <h1>connect</h1>
+            <span className="brand-date">{syncedLabel}</span>
+          </div>
 
-        <label className="sr-only" htmlFor="whoami">
-          Who are you?
-        </label>
-        <select
-          id="whoami"
-          className="input"
-          style={{ width: 'auto', minWidth: 140 }}
-          value={me ?? ''}
-          onChange={(e) => selectMe(e.target.value)}
-          disabled={pending}
-        >
-          <option value="">I am…</option>
-          {people.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+          <nav className="nav-links" aria-label="Main Navigation">
+            <a href="#cards" className="nav-link">👥 Cards</a>
+            <a href="#weekly-recap" className="nav-link">🏆 Recap</a>
+            <a href="#head-to-head" className="nav-link">⚔️ Head to Head</a>
+            <a href="#stakes" className="nav-link">🍕 Penalties</a>
+            <a href="#goals" className="nav-link">🎯 Goals</a>
+            <a href="#activity" className="nav-link">⚡ Activity</a>
+          </nav>
 
-        <div className="segmented" role="group" aria-label="Time range">
-          {WINDOW_OPTIONS.map((d) => (
-            <button key={d} type="button" aria-pressed={windowDays === d} onClick={() => setWindow(d)}>
-              {WINDOW_LABEL[d]}
+          <div className="nav-controls">
+            <label className="sr-only" htmlFor="whoami">
+              Who are you?
+            </label>
+            <select
+              id="whoami"
+              className="input"
+              style={{ width: 'auto', minWidth: 120 }}
+              value={me ?? ''}
+              onChange={(e) => selectMe(e.target.value)}
+              disabled={pending}
+            >
+              <option value="">I am…</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+
+            <div className="segmented" role="group" aria-label="Time range">
+              {WINDOW_OPTIONS.map((d) => (
+                <button key={d} type="button" aria-pressed={windowDays === d} onClick={() => setWindow(d)}>
+                  {WINDOW_LABEL[d]}
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="btn"
+              type="button"
+              onClick={() => applyTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
+              title={`Theme: ${theme}`}
+            >
+              <span aria-hidden="true">{theme === 'dark' ? '◐' : theme === 'light' ? '○' : '◑'}</span>
+              <span className="sr-only">Theme: {theme}. Click to change.</span>
             </button>
-          ))}
+
+            <Link className="btn" href="/settings">
+              Settings
+            </Link>
+
+            <button className="btn btn-primary" type="button" onClick={refresh} disabled={pending}>
+              {pending ? 'Syncing…' : 'Refresh'}
+            </button>
+          </div>
         </div>
-
-        <button
-          className="btn"
-          type="button"
-          onClick={() => applyTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
-          title={`Theme: ${theme}`}
-        >
-          <span aria-hidden="true">{theme === 'dark' ? '◐' : theme === 'light' ? '○' : '◑'}</span>
-          <span className="sr-only">Theme: {theme}. Click to change.</span>
-        </button>
-
-        <Link className="btn" href="/settings">
-          Settings
-        </Link>
-
-        <button className="btn btn-primary" type="button" onClick={refresh} disabled={pending}>
-          {pending ? 'Syncing…' : 'Refresh'}
-        </button>
-      </div>
+      </header>
 
       {error && (
         <div className="notice" data-tone="critical" style={{ marginBottom: 20 }}>

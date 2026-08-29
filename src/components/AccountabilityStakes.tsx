@@ -1,4 +1,7 @@
-import { formatDay, type Day } from '@/lib/date';
+'use client';
+
+import { useState } from 'react';
+import { formatDay, getCalendarWeekDays, type Day } from '@/lib/date';
 import type { PersonView } from '@/lib/types';
 
 interface PenaltyItem {
@@ -10,6 +13,8 @@ interface PenaltyItem {
   slot: number;
 }
 
+type StakesTimeframe = 'this-week' | 'last-week' | 'all';
+
 export default function AccountabilityStakes({
   people,
   today,
@@ -17,9 +22,27 @@ export default function AccountabilityStakes({
   people: PersonView[];
   today: Day;
 }) {
+  const [timeframe, setTimeframe] = useState<StakesTimeframe>('this-week');
+
   if (people.length === 0) return null;
 
-  // Process missed goal days in the past 14 days (excluding today)
+  let targetDays: Day[];
+  let timeframeLabel = '';
+
+  if (timeframe === 'this-week') {
+    const week = getCalendarWeekDays(today, 0);
+    targetDays = week.filter((d) => d < today); // up to yesterday/completed days of this week
+    timeframeLabel = 'This Calendar Week';
+  } else if (timeframe === 'last-week') {
+    targetDays = getCalendarWeekDays(today, -1);
+    timeframeLabel = 'Last Calendar Week (Mon–Sun)';
+  } else {
+    // past 14 days
+    const { days } = people[0];
+    targetDays = days.map((d) => d.day).filter((d) => d < today).slice(-14);
+    timeframeLabel = 'Past 14 Days';
+  }
+
   const penaltiesByPerson: Record<string, PenaltyItem[]> = {};
   people.forEach((p) => {
     penaltiesByPerson[p.person.id] = [];
@@ -27,10 +50,12 @@ export default function AccountabilityStakes({
 
   people.forEach((view) => {
     const { person, days, checkins } = view;
-    // Filter days prior to today
-    const pastDays = days.filter((d) => d.day < today).slice(-14);
+    const byDayMap = new Map(days.map((d) => [d.day, d]));
 
-    pastDays.forEach((stat) => {
+    targetDays.forEach((targetDay) => {
+      const stat = byDayMap.get(targetDay);
+      if (!stat) return;
+
       const hasGoals = person.goalGithub > 0 || person.goalLeetcode > 0;
       if (!hasGoals) return;
 
@@ -39,12 +64,12 @@ export default function AccountabilityStakes({
       const allMet = githubMet && leetcodeMet;
 
       if (!allMet) {
-        const checkin = checkins[stat.day];
+        const checkin = checkins[targetDay];
         const noteText = checkin?.note?.trim() ?? '';
         const hasReason = noteText.length > 0;
 
         penaltiesByPerson[person.id].push({
-          day: stat.day,
+          day: targetDay,
           personId: person.id,
           personName: person.name,
           hasReason,
@@ -56,15 +81,37 @@ export default function AccountabilityStakes({
   });
 
   return (
-    <section className="card stakes-panel">
+    <section className="card stakes-panel" id="stakes">
       <div className="section-head">
         <h2>🍕 Accountability Stakes & Meal Penalties</h2>
         <div className="spacer" />
-        <span className="subtle">Streak Protection & Penalty Ledger</span>
+        <div className="segmented" role="group" aria-label="Stakes timeframe">
+          <button
+            type="button"
+            aria-pressed={timeframe === 'this-week'}
+            onClick={() => setTimeframe('this-week')}
+          >
+            This Week
+          </button>
+          <button
+            type="button"
+            aria-pressed={timeframe === 'last-week'}
+            onClick={() => setTimeframe('last-week')}
+          >
+            Last Week
+          </button>
+          <button
+            type="button"
+            aria-pressed={timeframe === 'all'}
+            onClick={() => setTimeframe('all')}
+          >
+            14 Days
+          </button>
+        </div>
       </div>
 
       <div className="stakes-rule-box">
-        <div className="stakes-rule-title">🍔 The Golden Rule of Accountability</div>
+        <div className="stakes-rule-title">🍔 Weekly Meal Penalty Ledger ({timeframeLabel})</div>
         <p className="stakes-rule-desc">
           If a daily goal is missed without writing a valid reason in your daily check-in note, you owe your partner a meal!
           Write your reason in the daily check-in box to excuse a missed day.
@@ -87,7 +134,7 @@ export default function AccountabilityStakes({
               </div>
 
               {items.length === 0 ? (
-                <div className="stakes-empty">All goals met in past 14 days! Perfect record.</div>
+                <div className="stakes-empty">All goals met for {timeframeLabel.toLowerCase()}! Perfect record.</div>
               ) : (
                 <div className="stakes-list">
                   {items.map((item) => (
@@ -96,11 +143,11 @@ export default function AccountabilityStakes({
                       <div className="stakes-item-status">
                         {item.hasReason ? (
                           <span className="badge" data-tone="good" title={item.reasonText}>
-                            📝 Valid Reason: &quot;{item.reasonText.length > 25 ? `${item.reasonText.slice(0, 25)}...` : item.reasonText}&quot;
+                            📝 Reason: &quot;{item.reasonText.length > 25 ? `${item.reasonText.slice(0, 25)}...` : item.reasonText}&quot;
                           </span>
                         ) : (
                           <span className="badge meal-badge" data-tone="critical">
-                            🍔 Meal Penalty Owed
+                            🍔 Meal Owed
                           </span>
                         )}
                       </div>
